@@ -69,7 +69,7 @@ class Planes(Vehicle):
 
     def TakeOff(self):
         if self.NeedsMaintenance:
-            print('ERROR!: This plane cannot fly until it undergoes repairs.')
+            print('ERROR! This plane cannot fly until it undergoes repairs.')
             self.IsFlying = False
         else:
             self.IsFlying = True
@@ -104,6 +104,9 @@ def fly_plane(plane, trips):
         else:
             print('Plane is going in for repairs')
             plane.Repair()
+            print('Repairs completed. Flight will now take place.')
+            plane.TakeOff()
+            plane.Land()
     return plane
 
 
@@ -123,7 +126,7 @@ def main():
         print('~~~~~~~~~~~~~~~~~~')
 
         cars[i] = drive_car(cars[i], car_trips[i])
-        print('STATUS CAR #{} AFTER {} TRIPS AND {} REPAIRS'.format(i + 1, cars[i].TotalTrips, cars[i].TotalRepairs))
+        print('STATUS CAR #{} AFTER {} TRIPS'.format(i + 1, car_trips[i]))
         print('~~~~~~~~~~~~~~~~~~')
         print(cars[i])
 
@@ -131,7 +134,7 @@ def main():
             cars[i].Repair()
             cars[i] = drive_car(cars[i], 25)
             print('~~~~~~~~~~~~~~~~~~')
-            print('STATUS CAR #{} AFTER {} TRIPS AND {} REPAIRS'.format(i + 1, cars[i].TotalTrips, cars[i].TotalRepairs))
+            print('STATUS CAR #{} AFTER {} TRIPS AND 1 REPAIR'.format(i + 1, car_trips[i]))
             print('~~~~~~~~~~~~~~~~~~')
             print(cars[i])
 
@@ -151,7 +154,7 @@ def main():
         print('~~~~~~~~~~~~~~~~~~')
 
         planes[i] = fly_plane(planes[i], plane_trips[i])
-        print('STATUS PLANE #{} AFTER {} TRIPS AND {} REPAIRS'.format(i + 1, planes[i].TotalTrips, planes[i].TotalRepairs))
+        print('STATUS PLANE #{} AFTER {} TRIPS'.format(i + 1, plane_trips[i]))
         print('~~~~~~~~~~~~~~~~~~')
         print(planes[i])
         print()
