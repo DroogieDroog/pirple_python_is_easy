@@ -214,7 +214,7 @@ def create_auto_word_list():
     words = word_file.read()
     word_list = words.splitlines()
     for word in word_list:
-        if word[0] not in string.ascii_uppercase:
+        if (word[0] not in string.ascii_uppercase) and (len(word) >= 6):
             auto_word_list.append(word.upper())
     return auto_word_list
 
