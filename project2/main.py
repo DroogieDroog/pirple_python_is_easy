@@ -137,34 +137,74 @@ def draw_board(guesses_used, known_letters, guess_letters):
 
 def take_a_guess(guesses_used, guess_letters, known_letters, secret_word):
 
+    solved = False
     while(True):
-        letter = input('Player 2, guess a letter: ')
-        if letter not in string.ascii_letters:
-            print('You must enter a letter. Try again.')
+        letter = input('Player 2, guess a letter or enter a ? to guess the word: ')
+        if letter not in string.ascii_letters and letter !='?':
+            print('You must enter a ? or a letter. Try again.')
         else:
-            repeat = False
-            for k in known_letters:
-                if (letter.upper() in k):
-                    repeat = True
-
-            if repeat:
-                print('You already guessed {}! Guess again.'.format(letter.upper()))
+            if letter == '?':
+                solved, guesses_used = guess_the_word(secret_word, guesses_used, known_letters, guess_letters)
+                if solved:
+                    break
             else:
-                break
+                repeat = False
+                for k in known_letters:
+                    if (letter.upper() in k):
+                        repeat = True
 
-    found = False
-    for i in range(len(secret_word)):
-        if letter.upper() == secret_word[i]:
-            blank_to_correct = known_letters[i].maketrans('_', letter.upper())
-            known_letters[i] = known_letters[i].translate(blank_to_correct)
-            found = True
+                if repeat:
+                    print('You already guessed {}! Guess again.'.format(letter.upper()))
+                else:
+                    break
 
-    if not found:
-        guess_letters, guesses_used, status = wrong_guess(letter.upper(), guess_letters, guesses_used, known_letters, secret_word)
+    if not solved:
+        found = False
+        for i in range(len(secret_word)):
+            if letter.upper() == secret_word[i]:
+                blank_to_correct = known_letters[i].maketrans('_', letter.upper())
+                known_letters[i] = known_letters[i].translate(blank_to_correct)
+                found = True
+
+        if not found:
+            guess_letters, guesses_used, status = wrong_guess(letter.upper(), guess_letters, guesses_used, known_letters, secret_word)
+        else:
+            status = correct_guess(letter.upper(), known_letters, guesses_used, guess_letters)
     else:
-        status = correct_guess(letter.upper(), known_letters, guesses_used, guess_letters)
+        status = 'S'
 
     return guesses_used, guess_letters, known_letters, status
+
+
+def guess_the_word(secret_word, guesses_used, known_letters, guess_letters):
+    valid_guess = False
+    while not valid_guess:
+        guess_word = input('You think you know it, eh? Alrighty then, what\'s the secret word? ')
+
+        valid_guess = True
+        for letter in guess_word:
+            if letter not in string.ascii_letters:
+                valid_guess = False
+
+        if not valid_guess:
+            print('You must enter a word comprised only of letters. Try again.')
+
+    if guess_word.upper() == secret_word:
+        known_letters = []
+        for letter in secret_word:
+            known_letters.append('{} '.format(letter))
+        draw_board(guesses_used, known_letters, guess_letters)
+        print('You guessed it! Nice job.')
+        sleep(1)
+        solved = True
+    else:
+        print('Sorry, {} is not the secret word. Keep trying'.format(guess_word.upper()))
+        sleep(1)
+        guesses_used += 1
+        draw_board(guesses_used, known_letters, guess_letters)
+        solved = False
+
+    return solved, guesses_used
 
 
 def wrong_guess(letter, guess_letters, guesses_used, known_letters, secret_word):
