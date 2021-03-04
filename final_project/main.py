@@ -15,7 +15,7 @@ class Player:
         self.Name = name
         self.Computer = computer
         self.Hand = {}
-        self.Match = 0
+        self.Game = 0
         self.Round = 0
         self.Deadwood = 0
         self.Groups = {}
@@ -83,8 +83,8 @@ def create_deck():
     return deck, map
 
 
-def choose_dealer(new_match, winner):
-    if new_match:
+def choose_dealer(new_game, winner):
+    if new_game:
         r = randint(1, 100)
         if r <= 50:
             dealer = 0
@@ -99,7 +99,7 @@ def choose_dealer(new_match, winner):
     return dealer
 
 
-def deal_hand(deck, new_match=True, winner=None):
+def deal_hand(deck, new_game=True, winner=None):
     hands = []
     hands.append({})
     hands.append({})
@@ -112,14 +112,21 @@ def deal_hand(deck, new_match=True, winner=None):
             else:
                 hands[hand].update({top_card[0]: [top_card[1]]})
 
-    dealer = choose_dealer(new_match, winner)
+    dealer = choose_dealer(new_game, winner)
     if dealer == 0:
         return dealer, hands[1], hands[0]
     else:
         return dealer, hands[0], hands[1]
 
 
-def start_new_match():
+def start_new_game():
+    while(True):
+        game_target = input('Would you like to play each round to 100 or 200 points? ')
+        if game_target not in (100, 200):
+            print('You must enter 100 or 200.  Enter again.')
+        else:
+            break
+
     while(True):
         player_name = input('Please enter your name: ')
         yn = input('You\'ve chosen {} for your name. Is that correct (y/n)? '.format(player_name))
@@ -134,14 +141,14 @@ def start_new_match():
     dealer, players[0].Hand, players[1].Hand = deal_hand(card_deck)
     discard_pile = [card_deck.pop()]
 
-    return players, dealer, card_deck, card_map, discard_pile
+    return players, dealer, card_deck, card_map, discard_pile, game_target
 
 
 def display_current_status(players, dealer):
     clear_screen()
     pass
 
-def play_round(players, dealer):
+def play_round(players, dealer, round_points):
     display_current_status(players, dealer)
 
 
@@ -150,8 +157,8 @@ def main():
     global card_deck, card_map, discard_pile
     print('Welcome to JFL Gin Rummy! This is a one-player game against the Computer.')
 
-    players, dealer, card_deck, card_map, discard_pile = start_new_match()
-    play_round(players, dealer)
+    players, dealer, card_deck, card_map, discard_pile, game_target = start_new_game()
+    play_round(players, dealer, game_target)
     x = 1
 
 
