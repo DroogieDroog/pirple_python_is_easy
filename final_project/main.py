@@ -6,6 +6,7 @@ Create a gin rummy game
 """
 
 from random import (shuffle, randint)
+from time import sleep
 from os import system, name
 
 
@@ -40,13 +41,18 @@ class Player:
                     print(card_map[denom] + suit, end=' ')
         print()
 
+    def draw(self, hand, source):
+        draw_card = source.pop()
+        if draw_card[0] in hand.keys():
+            hand[draw_card[0]].append(draw_card[1])
+        else:
+            hand.update({draw_card[0]: [draw_card[1]]})
+        self.print_hand()
+        return self.Hand
+
     def score(self, hand):
         pass
         #return self.Score, self.Round, self.Deadwood
-
-    def draw(self, hand):
-        pass
-        #return self.Hand
 
     def discard(self, hand):
         pass
@@ -99,7 +105,7 @@ def choose_dealer(new_game, winner):
     return dealer
 
 
-def deal_hand(deck, new_game=True, winner=None):
+def deal_hand(deck, players, new_game=True, winner=None):
     hands = []
     hands.append({})
     hands.append({})
@@ -114,15 +120,19 @@ def deal_hand(deck, new_game=True, winner=None):
 
     dealer = choose_dealer(new_game, winner)
     if dealer == 0:
+        print('{} is the dealer.  {} goes first. Dealing the hands . . .'.format(players[0].Name, players[1].Name))
+        sleep(2)
         return dealer, hands[1], hands[0]
     else:
+        print('{} is the dealer.  {} goes first. Dealing the hands . . .'.format(players[1].Name, players[0].Name))
+        sleep(2)
         return dealer, hands[0], hands[1]
 
 
 def start_new_game():
     while(True):
         game_target = input('Would you like to play each round to 100 or 200 points? ')
-        if game_target not in (100, 200):
+        if int(game_target) not in (100, 200):
             print('You must enter 100 or 200.  Enter again.')
         else:
             break
@@ -138,19 +148,49 @@ def start_new_game():
 
     players = [Player(player_name), Player('Computer', True)]
     card_deck, card_map = create_deck()
-    dealer, players[0].Hand, players[1].Hand = deal_hand(card_deck)
+    dealer, players[0].Hand, players[1].Hand = deal_hand(card_deck, players)
     discard_pile = [card_deck.pop()]
 
-    return players, dealer, card_deck, card_map, discard_pile, game_target
+    return players, dealer, card_deck, card_map, discard_pile, int(game_target)
 
 
 def display_current_status(players, dealer):
     clear_screen()
     pass
 
-def play_round(players, dealer, round_points):
-    display_current_status(players, dealer)
+def play_game(players, dealer, card_deck, discard_pile, game_target):
+    round_complete = False
 
+    if dealer == 0:
+        current_player = 1
+    else:
+        current_player = 0
+
+    while not round_complete:
+        display_current_status(players, dealer)
+        players, round_complete = play_hand(players[current_player], card_deck, discard_pile)
+
+        if current_player == 0:
+            current_player = 1
+        else:
+            current_player = 0
+
+
+def play_hand(player, card_deck, discard_pile,):
+    print('{}, would you like to draw from the deck (D) or discard pile (P)?'.format(player.Name))
+    while(True):
+        draw_source = input('Make your choice: ')
+        if draw_source.upper() not in ('D', 'P'):
+            print('You must choose either the (D)eck or discard (P)ile to draw from.')
+        else:
+            break
+
+    if draw_source.upper() == 'D':
+        player.draw(player.Hand, card_deck)
+    else:
+        player.draw(player.Hand, discard_pile)
+
+    pass
 
 
 def main():
@@ -158,7 +198,7 @@ def main():
     print('Welcome to JFL Gin Rummy! This is a one-player game against the Computer.')
 
     players, dealer, card_deck, card_map, discard_pile, game_target = start_new_game()
-    play_round(players, dealer, game_target)
+    play_game(players, dealer, card_deck, discard_pile, game_target)
     x = 1
 
 
