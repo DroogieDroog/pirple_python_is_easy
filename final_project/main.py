@@ -41,18 +41,13 @@ class Player:
                     print(card_map[denom] + suit, end=' ')
         print()
 
-    def draw(self, hand, source):
+    def draw(self, source):
         draw_card = source.pop()
-        if draw_card[0] in hand.keys():
-            hand[draw_card[0]].append(draw_card[1])
+        if draw_card[0] in self.Hand.keys():
+            self.Hand[draw_card[0]].append(draw_card[1])
         else:
-            hand.update({draw_card[0]: [draw_card[1]]})
+            self.Hand.update({draw_card[0]: [draw_card[1]]})
         self.print_hand()
-        return self.Hand
-
-    def score(self, hand):
-        pass
-        #return self.Score, self.Round, self.Deadwood
 
     def discard(self, hand):
         pass
@@ -60,6 +55,10 @@ class Player:
 
     def knock(self):
         pass
+
+    def score(self, hand):
+        pass
+        #return self.Score, self.Round, self.Deadwood
 
 
 def clear_screen():
@@ -120,11 +119,11 @@ def deal_hand(deck, players, new_game=True, winner=None):
 
     dealer = choose_dealer(new_game, winner)
     if dealer == 0:
-        print('{} is the dealer.  {} goes first. Dealing the hands . . .'.format(players[0].Name, players[1].Name))
+        print('{} is the dealer. {} goes first. Dealing the hands . . .'.format(players[0].Name, players[1].Name))
         sleep(2)
         return dealer, hands[1], hands[0]
     else:
-        print('{} is the dealer.  {} goes first. Dealing the hands . . .'.format(players[1].Name, players[0].Name))
+        print('{} is the dealer. {} goes first. Dealing the hands . . .'.format(players[1].Name, players[0].Name))
         sleep(2)
         return dealer, hands[0], hands[1]
 
@@ -154,9 +153,23 @@ def start_new_game():
     return players, dealer, card_deck, card_map, discard_pile, int(game_target)
 
 
-def display_current_status(players, dealer):
+def display_current_status(players, card_deck, discard_pile):
+    break_line = '\u274C' * 25
+    cards_left = len(card_deck)
+    if len(discard_pile) > 0:
+        top_discard = card_map[discard_pile[-1][0]] + discard_pile[-1][1]
+    else:
+        top_discard = '<Empty>'
+
     clear_screen()
-    pass
+    print(break_line + '\n')
+    players[1].print_hand()
+    print()
+    print('Draw pile: {} cards   Discard: {}'.format(cards_left, top_discard))
+    print()
+    players[0].print_hand()
+    print('\n' + break_line)
+
 
 def play_game(players, dealer, card_deck, discard_pile, game_target):
     round_complete = False
@@ -167,8 +180,8 @@ def play_game(players, dealer, card_deck, discard_pile, game_target):
         current_player = 0
 
     while not round_complete:
-        display_current_status(players, dealer)
-        players, round_complete = play_hand(players[current_player], card_deck, discard_pile)
+        display_current_status(players, card_deck, discard_pile)
+        round_complete = play_hand(players[current_player], card_deck, discard_pile)
 
         if current_player == 0:
             current_player = 1
@@ -176,25 +189,30 @@ def play_game(players, dealer, card_deck, discard_pile, game_target):
             current_player = 0
 
 
-def play_hand(player, card_deck, discard_pile,):
-    print('{}, would you like to draw from the deck (D) or discard pile (P)?'.format(player.Name))
-    while(True):
-        draw_source = input('Make your choice: ')
-        if draw_source.upper() not in ('D', 'P'):
-            print('You must choose either the (D)eck or discard (P)ile to draw from.')
-        else:
-            break
+def play_hand(player, card_deck, discard_pile):
+    if len(discard_pile) > 0:
+        print('{}, would you like to draw from the deck (D) or discard pile (P)?'.format(player.Name))
+        while(True):
+            draw_source = input('Make your choice: ')
+            if draw_source.upper() not in ('D', 'P'):
+                print('You must choose either the (D)eck or discard (P)ile to draw from.')
+            else:
+                break
+    else:
+        print('Discard pile is empty. Automatically drawing from the deck for {}.'.format(player.Name))
+        draw_source = 'D'
 
     if draw_source.upper() == 'D':
-        player.draw(player.Hand, card_deck)
+        player.draw(card_deck)
     else:
-        player.draw(player.Hand, discard_pile)
+        player.draw(discard_pile)
 
-    pass
+    return False
 
 
 def main():
     global card_deck, card_map, discard_pile
+    clear_screen()
     print('Welcome to JFL Gin Rummy! This is a one-player game against the Computer.')
 
     players, dealer, card_deck, card_map, discard_pile, game_target = start_new_game()
