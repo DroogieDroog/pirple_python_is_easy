@@ -16,11 +16,19 @@ class Player:
         self.Name = name
         self.Computer = computer
         self.Hand = {}
+        self.HandCounts = {}
         self.Sets = {}
+        self.Wishes = []
 
     def new_hand(self, hand, sets={}):
         self.Hand = hand
+        self.HandCounts = {}
         self.Sets = sets
+        self.Wishes = []
+
+    def hand_counts(self):
+        for denom in self.Hand.keys():
+            self.HandCounts.update({denom: len(self.Hand[denom])})
 
     def print_hand(self):
         if self.Name.upper().endswith('S'):
@@ -211,6 +219,12 @@ def play_game(players, dealer, card_deck):
     while not game_over:
         game_over = play_hand(players, current_player, card_deck, card_map)
 
+        if players[current_player].Computer:
+            while True:
+                wait = input('Enter a C to continue . . .')
+                if wait.upper() == 'C':
+                    break
+
         if current_player == 0:
             current_player = 1
         else:
@@ -234,18 +248,45 @@ def play_hand(players, current_player, card_deck, card_map):
     print('Your turn, {}.'.format(player.Name))
 
     while got_wish and not game_over:
-        while True:
-            wish = input('What is your wish? ')
-            if wish.upper() not in card_map.values():
-                print('You must wish for a valid card value (2-10, J, Q, K, A)')
-            else:
-                break
+        if player.Computer:
+            player.Wishes = []
+            player.hand_counts()
+            wish = generate_wish(player, card_map, card_map_values)
+#            wish = request_wish(player, card_map, card_map_values)
+        else:
+            wish = request_wish(player, card_map, card_map_values)
 
-        value_position = card_map_values.index(wish.upper())
-        got_wish = player.cast(opp_hand, card_deck, card_map_keys[value_position])
+        got_wish = player.cast(opp_hand, card_deck, card_map_keys[wish])
         game_over = player.lay_set()
 
     return game_over
+
+
+def request_wish(player, card_map, card_map_values):
+    while True:
+        wish = input('What is your wish? ')
+        if wish.upper() not in card_map.values():
+            print('You must wish for a valid card value (2-10, J, Q, K, A)')
+        else:
+            value_position = card_map_values.index(wish.upper())
+            if value_position not in player.Hand.keys():
+                print('You must wish for a card value in your hand.')
+            else:
+                break
+
+    return value_position
+
+
+def generate_wish(player, card_map, card_map_values):
+    highest_count = 0
+    for denom, count in player.HandCounts.items():
+        if (count > highest_count) and (denom not in player.Wishes):
+            most_cards = denom
+            highest_count = count
+
+    player.Wishes.append(most_cards)
+    print('{} is wishing for a {}.'.format(player.Name, card_map[most_cards]))
+    return most_cards
 
 
 def main():
