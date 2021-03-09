@@ -55,7 +55,26 @@ class Player:
                 print()
         print()
 
-    def draw(self, card_deck, wish):
+    def cast(self, opp_hand, card_deck, wish):
+        if wish in opp_hand.keys():
+            print('Fish, fish, you got your wish!')
+            opp_cards = opp_hand.pop(wish)
+
+            if wish in self.Hand.keys():
+                for card in opp_cards:
+                    self.Hand[wish].append(card)
+            else:
+                self.Hand.update({wish: opp_cards})
+
+            self.print_hand()
+            return True
+        else:
+            print('Nope! Go fish.')
+            sleep(1)
+            got_wish = self.fish(card_deck, wish)
+            return got_wish
+
+    def fish(self, card_deck, wish):
         draw_card = card_deck.pop()
 
         if draw_card[0] in self.Hand.keys():
@@ -69,7 +88,7 @@ class Player:
             return True
         else:
             print('Booooo, you didn\'t get your wish.')
-            sleep(1)
+            sleep(2)
             return False
 
     def lay_set(self):
@@ -205,6 +224,11 @@ def play_hand(players, current_player, card_deck, card_map):
     card_map_keys = list(card_map.keys())
     card_map_values = list(card_map.values())
 
+    if current_player == 0:
+        opp_hand = players[1].Hand
+    else:
+        opp_hand = players[0].Hand
+
     display_current_status(players, card_deck)
     player = players[current_player]
     print('Your turn, {}.'.format(player.Name))
@@ -218,7 +242,7 @@ def play_hand(players, current_player, card_deck, card_map):
                 break
 
         value_position = card_map_values.index(wish.upper())
-        got_wish = player.draw(card_deck, card_map_keys[value_position])
+        got_wish = player.cast(opp_hand, card_deck, card_map_keys[value_position])
         game_over = player.lay_set()
 
     return game_over
