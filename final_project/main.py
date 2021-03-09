@@ -36,12 +36,26 @@ class Player:
                 else:
                     print(card_map[denom] + suit, end=' ')
         print()
-        self.print_sets()
+        if self.Sets != {}:
+            self.print_sets()
 
     def print_sets(self):
-        pass
+        if self.Name.upper().endswith('S'):
+            print('{}\' sets: '.format(self.Name), end=' ')
+        else:
+            print('{}\'s sets: '.format(self.Name), end=' ')
 
-    def draw(self, card_deck, card_map, wish):
+        for denom in sorted(self.Sets):
+            for suit in self.Sets[denom]:
+                if self.Computer:
+                    print(card_map[denom] + suit, end=' ')
+                #                    print('\u2733', end=' ')
+                else:
+                    print(card_map[denom] + suit, end=' ')
+                print()
+        print()
+
+    def draw(self, card_deck, wish):
         draw_card = card_deck.pop()
 
         if draw_card[0] in self.Hand.keys():
@@ -49,12 +63,13 @@ class Player:
         else:
             self.Hand.update({draw_card[0]: [draw_card[1]]})
 
-        if draw_card[0] == card_map[wish]:
+        if draw_card[0] == wish:
             print('Fish, fish, you got your wish!')
             self.print_hand()
             return True
         else:
             print('Booooo, you didn\'t get your wish.')
+            sleep(1)
             return False
 
     def lay_set(self):
@@ -186,6 +201,10 @@ def play_game(players, dealer, card_deck):
 def play_hand(players, current_player, card_deck, card_map):
     got_wish = True
     game_over = False
+
+    card_map_keys = list(card_map.keys())
+    card_map_values = list(card_map.values())
+
     display_current_status(players, card_deck)
     player = players[current_player]
     print('Your turn, {}.'.format(player.Name))
@@ -198,7 +217,8 @@ def play_hand(players, current_player, card_deck, card_map):
             else:
                 break
 
-        got_wish = player.draw(card_deck, card_map, wish)
+        value_position = card_map_values.index(wish.upper())
+        got_wish = player.draw(card_deck, card_map_keys[value_position])
         game_over = player.lay_set()
 
     return game_over
