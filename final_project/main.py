@@ -17,18 +17,24 @@ class Player:
         self.Computer = computer
         self.Hand = {}
         self.HandCounts = {}
-        self.Sets = {}
+        self.Sets = []
         self.Wishes = []
 
-    def new_hand(self, hand, sets={}):
+    def new_hand(self, hand):
         self.Hand = hand
         self.HandCounts = {}
-        self.Sets = sets
+        self.Sets = []
         self.Wishes = []
 
     def hand_counts(self):
         for denom in self.Hand.keys():
             self.HandCounts.update({denom: len(self.Hand[denom])})
+
+    def check_wishes(self):
+        if set(self.Wishes) == set(self.Hand.keys()):
+            self.Wishes = []
+        elif len(self.Wishes) == 5:
+            self.Wishes.pop(0)
 
     def print_hand(self):
         if self.Name.upper().endswith('S'):
@@ -44,7 +50,7 @@ class Player:
                 else:
                     print(card_map[denom] + suit, end=' ')
         print()
-        if self.Sets != {}:
+        if self.Sets != []:
             self.print_sets()
 
     def print_sets(self):
@@ -54,13 +60,11 @@ class Player:
             print('{}\'s sets: '.format(self.Name), end=' ')
 
         for denom in sorted(self.Sets):
-            for suit in self.Sets[denom]:
-                if self.Computer:
-                    print(card_map[denom] + suit, end=' ')
-                #                    print('\u2733', end=' ')
-                else:
-                    print(card_map[denom] + suit, end=' ')
-                print()
+            if self.Computer:
+                print(card_map[denom] + 's', end=' ')
+            #                    print('\u2733', end=' ')
+            else:
+                print(card_map[denom] + 's', end=' ')
         print()
 
     def cast(self, opp_hand, card_deck, wish):
@@ -74,11 +78,10 @@ class Player:
             else:
                 self.Hand.update({wish: opp_cards})
 
-            self.print_hand()
             return True
         else:
             print('Nope! Go fish.')
-            sleep(1)
+            sleep(2)
             got_wish = self.fish(card_deck, wish)
             return got_wish
 
@@ -92,17 +95,21 @@ class Player:
 
         if draw_card[0] == wish:
             print('Fish, fish, you got your wish!')
-            self.print_hand()
             return True
         else:
-            print('Booooo, you didn\'t get your wish.')
-            sleep(2)
+            print('Booooo, you didn\'t get your wish. You got a {}'.format(card_map[draw_card[0]]))
+            sleep(3)
             return False
 
     def lay_set(self):
+        new_set = -1
         for card, suits in self.Hand.items():
             if len(suits) == 4:
-                self.Sets.update(self.Hand.pop(card))
+                new_set = card
+
+        if new_set != -1:
+            self.Hand.pop(new_set)
+            self.Sets.append(new_set)
 
         if len(self.Hand) == 0:
             return True
@@ -240,8 +247,10 @@ def play_hand(players, current_player, card_deck, card_map):
 
     if current_player == 0:
         opp_hand = players[1].Hand
+        opp_sets = players[1].Sets
     else:
         opp_hand = players[0].Hand
+        opp_sets = players[0].Sets
 
     display_current_status(players, card_deck)
     player = players[current_player]
@@ -249,15 +258,16 @@ def play_hand(players, current_player, card_deck, card_map):
 
     while got_wish and not game_over:
         if player.Computer:
-            player.Wishes = []
             player.hand_counts()
-            wish = generate_wish(player, card_map, card_map_values)
-#            wish = request_wish(player, card_map, card_map_values)
+            wish = generate_wish(player, opp_sets, card_map)
         else:
             wish = request_wish(player, card_map, card_map_values)
 
         got_wish = player.cast(opp_hand, card_deck, card_map_keys[wish])
         game_over = player.lay_set()
+
+        if got_wish and not game_over:
+            player.print_hand()
 
     return game_over
 
@@ -277,10 +287,11 @@ def request_wish(player, card_map, card_map_values):
     return value_position
 
 
-def generate_wish(player, card_map, card_map_values):
+def generate_wish(player, opp_sets, card_map):
+    player.check_wishes()
     highest_count = 0
     for denom, count in player.HandCounts.items():
-        if (count > highest_count) and (denom not in player.Wishes):
+        if (count > highest_count) and (denom not in player.Wishes) and (denom not in opp_sets):
             most_cards = denom
             highest_count = count
 
