@@ -15,13 +15,10 @@ class Player:
     def __init__(self, name, computer = False):
         self.Name = name
         self.Computer = computer
-        self.Hand = {}
-        self.HandCounts = {}
-        self.Sets = []
-        self.Wishes = []
+        self.new_hand()
 
-    def new_hand(self, hand):
-        self.Hand = hand
+    def new_hand(self):
+        self.Hand = {}
         self.HandCounts = {}
         self.Sets = []
         self.Wishes = []
@@ -45,8 +42,7 @@ class Player:
         for denom in sorted(self.Hand):
             for suit in self.Hand[denom]:
                 if self.Computer:
-                    print(card_map[denom] + suit, end=' ')
-#                    print('\u2733', end=' ')
+                    print('\u2733', end=' ')
                 else:
                     print(card_map[denom] + suit, end=' ')
         print()
@@ -60,11 +56,7 @@ class Player:
             print('{}\'s sets: '.format(self.Name), end=' ')
 
         for denom in sorted(self.Sets):
-            if self.Computer:
-                print(card_map[denom] + 's', end=' ')
-            #                    print('\u2733', end=' ')
-            else:
-                print(card_map[denom] + 's', end=' ')
+            print(card_map[denom] + 's', end=' ')
         print()
 
     def cast(self, opp_hand, card_deck, wish):
@@ -97,7 +89,7 @@ class Player:
             print('Fish, fish, you got your wish!')
             return True
         else:
-            print('Booooo, you didn\'t get your wish. You got a {}'.format(card_map[draw_card[0]]))
+            print('Booooo, you didn\'t get your wish.')
             sleep(3)
             return False
 
@@ -145,7 +137,7 @@ def create_deck():
 
 
 def choose_dealer(new_game, winner):
-    if new_game:
+    if new_game or winner == 2:
         r = randint(1, 100)
         if r <= 50:
             dealer = 0
@@ -201,6 +193,15 @@ def start_new_game():
     return players, dealer, card_deck, card_map
 
 
+def play_again(players, winner):
+    players[0].new_hand()
+    players[1].new_hand()
+    card_deck, card_map = create_deck()
+    dealer, players[0].Hand, players[1].Hand = deal_hand(card_deck, players, False, winner)
+
+    return dealer, card_deck, card_map
+
+
 def display_current_status(players, card_deck):
     break_line = '\u274C' * 25
     cards_left = len(card_deck)
@@ -213,6 +214,25 @@ def display_current_status(players, card_deck):
     print()
     players[0].print_hand()
     print('\n' + break_line)
+
+
+def determine_winner(players, card_deck):
+    display_current_status(players, card_deck)
+
+    sets0 = len(players[0].Sets)
+    sets1 = len(players[1].Sets)
+    if sets0 > sets1:
+        print('{} wins, {} sets to {}'.format(players[0].Name, sets0, sets1))
+        winner = 0
+    elif sets1 > sets0:
+        print('{} wins, {} sets to {}'.format(players[1].Name, sets1, sets0))
+        winner = 1
+    else:
+        print('It\'s a tie!')
+        winner = 2
+
+    print('Good game!')
+    return winner
 
 
 def play_game(players, dealer, card_deck):
@@ -237,6 +257,8 @@ def play_game(players, dealer, card_deck):
         else:
             current_player = 0
 
+    return determine_winner(players, card_deck)
+
 
 def play_hand(players, current_player, card_deck, card_map):
     got_wish = True
@@ -255,6 +277,8 @@ def play_hand(players, current_player, card_deck, card_map):
     display_current_status(players, card_deck)
     player = players[current_player]
     print('Your turn, {}.'.format(player.Name))
+    if player.Computer:
+        player.HandCounts = {}
 
     while got_wish and not game_over:
         if player.Computer:
@@ -264,9 +288,13 @@ def play_hand(players, current_player, card_deck, card_map):
             wish = request_wish(player, card_map, card_map_values)
 
         got_wish = player.cast(opp_hand, card_deck, card_map_keys[wish])
-        game_over = player.lay_set()
 
-        if got_wish and not game_over:
+        if card_deck == []:
+            game_over = True
+        else:
+            game_over = player.lay_set()
+
+        if got_wish and not game_over and not player.Computer:
             player.print_hand()
 
     return game_over
@@ -290,10 +318,19 @@ def request_wish(player, card_map, card_map_values):
 def generate_wish(player, opp_sets, card_map):
     player.check_wishes()
     highest_count = 0
-    for denom, count in player.HandCounts.items():
-        if (count > highest_count) and (denom not in player.Wishes) and (denom not in opp_sets):
-            most_cards = denom
-            highest_count = count
+    most_cards = -1
+
+    while most_cards == -1:
+        for denom, count in player.HandCounts.items():
+            if (count > highest_count) and (denom not in player.Wishes)\
+                    and (denom not in opp_sets) and (denom not in player.Sets):
+                most_cards = denom
+                highest_count = count
+
+        if most_cards == -1:
+            player.Wishes = []
+            player.HandCounts = {}
+            player.hand_counts()
 
     player.Wishes.append(most_cards)
     print('{} is wishing for a {}.'.format(player.Name, card_map[most_cards]))
@@ -306,8 +343,16 @@ def main():
     print('Welcome to JFL Go Fish! This is a one-player game against the Computer.')
 
     players, dealer, card_deck, card_map = start_new_game()
-    play_game(players, dealer, card_deck)
-    x = 1
+
+    play = True
+    while play:
+        winner = play_game(players, dealer, card_deck)
+
+        yn = input('Would you like to play again (y/n)? ')
+        if yn.upper() != 'Y':
+            play = False
+        else:
+            dealer, card_deck, card_map = play_again(players, winner)
 
 
 if __name__ == '__main__':
