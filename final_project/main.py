@@ -9,7 +9,6 @@ from random import (shuffle, randint)
 from time import sleep
 from os import system, name
 
-
 class Player:
 
     def __init__(self, name, computer = False):
@@ -157,7 +156,7 @@ def deal_hand(deck, players, new_game=True, winner=None):
     hands.append({})
     hands.append({})
 
-    for card in range(7):
+    for card in range(10):
         for hand in range(2):
             top_card = deck.pop()
             if top_card[0] in hands[hand].keys():
@@ -178,7 +177,12 @@ def deal_hand(deck, players, new_game=True, winner=None):
 
 def start_new_game():
     while(True):
-        player_name = input('Please enter your name: ')
+        player_name = '--help'
+        while player_name.upper() == '--HELP':
+            player_name = input('Please enter your name (or --help for the rules): ')
+            if player_name.upper() == '--HELP':
+                print_rules()
+
         yn = input('You\'ve chosen {} for your name. Is that correct (y/n)? '.format(player_name))
         if yn.upper() == 'Y':
             print('OK, then let\'s play!')
@@ -337,6 +341,19 @@ def generate_wish(player, opp_sets, card_map):
     return most_cards
 
 
+def print_rules():
+    clear_screen()
+    with open('data/rules.txt', 'r') as rules:
+        rules_text = rules.read()
+        print(rules_text)
+
+    while True:
+        wait = input('Enter an R to return to the game . . .')
+        if wait.upper() == 'R':
+            clear_screen()
+            break
+
+
 def main():
     global card_deck, card_map
     clear_screen()
@@ -354,6 +371,7 @@ def main():
         else:
             dealer, card_deck, card_map = play_again(players, winner)
 
+    print('Goodbye!')
 
 if __name__ == '__main__':
     main()
